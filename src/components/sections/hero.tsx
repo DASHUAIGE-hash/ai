@@ -1,19 +1,19 @@
 "use client";
 
-import { motion, useScroll, useTransform, type Variants } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 import { ArrowDown, Sparkles, Image, Video } from "lucide-react";
 import { MascotDoujiao } from "@/components/mascot/doujiao";
 import Link from "next/link";
 
-const stagger: Variants = {
+const stagger: any = {
   hidden: {},
   visible: {
     transition: { staggerChildren: 0.12, delayChildren: 0.3 },
   },
 };
 
-const fadeUp: Variants = {
+const fadeUp: any = {
   hidden: { y: 40, opacity: 0, filter: "blur(8px)" },
   visible: {
     y: 0,

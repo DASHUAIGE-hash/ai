@@ -34,7 +34,7 @@ const container = {
   },
 };
 
-const fadeUp = {
+const fadeUp: any = {
   hidden: { y: 40, opacity: 0 },
   visible: {
     y: 0,

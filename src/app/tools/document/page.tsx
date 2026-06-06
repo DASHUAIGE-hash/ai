@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { FileText, Upload, Sparkles, Copy, Download, FileSpreadsheet, Presentation, ScrollText, RefreshCw } from "lucide-react";
+import { FileText, Sparkles, Copy, Download, FileSpreadsheet, Presentation, ScrollText, RefreshCw } from "lucide-react";
 
 const DOC_TOOLS = [
   { id: "summary", label: "文档摘要", icon: ScrollText, desc: "提取核心要点", color: "#ff375f" },
@@ -37,6 +37,39 @@ export default function DocumentPage() {
       setResult("文档服务暂时不可用");
     }
     setIsProcessing(false);
+  };
+
+  const handleCopy = () => {
+    if (result) { navigator.clipboard.writeText(result); alert("已复制到剪贴板"); }
+  };
+
+  const handleExport = async () => {
+    if (!result) return;
+
+    if (activeDocTool === "ppt") {
+      // 调用服务端 API 生成真正的 PPTX 文件
+      const res = await fetch("/api/export/ppt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: result }),
+      });
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `豆角PPT_${new Date().toLocaleDateString()}.pptx`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } else {
+      // 摘要和写作导出 TXT
+      const blob = new Blob([result], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `豆角文档_${new Date().toLocaleDateString()}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
   };
 
   const tool = DOC_TOOLS.find(t => t.id === activeDocTool)!;
@@ -99,8 +132,8 @@ export default function DocumentPage() {
                   <div className="rounded-xl bg-white/[0.03] border border-white/[0.05] p-4">
                     <p className="text-sm text-[#98989d] leading-relaxed whitespace-pre-wrap">{result}</p>
                     <div className="flex gap-2 mt-4">
-                      <button className="flex items-center gap-1 rounded-lg bg-white/[0.04] px-3 py-1.5 text-xs text-[#98989d] hover:text-white transition-colors"><Copy className="h-3 w-3" />复制</button>
-                      <button className="flex items-center gap-1 rounded-lg bg-white/[0.04] px-3 py-1.5 text-xs text-[#98989d] hover:text-white transition-colors"><Download className="h-3 w-3" />导出</button>
+                      <button onClick={handleCopy} className="flex items-center gap-1 rounded-lg bg-white/[0.04] px-3 py-1.5 text-xs text-[#98989d] hover:text-white transition-colors"><Copy className="h-3 w-3" />复制</button>
+                      <button onClick={handleExport} className="flex items-center gap-1 rounded-lg bg-white/[0.04] px-3 py-1.5 text-xs text-[#98989d] hover:text-white transition-colors"><Download className="h-3 w-3" />导出</button>
                     </div>
                   </div>
                 ) : (

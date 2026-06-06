@@ -104,14 +104,14 @@ const tools: Tool[] = [
   },
 ];
 
-const container = {
+const container: any = {
   hidden: {},
   visible: {
     transition: { staggerChildren: 0.06, delayChildren: 0.1 },
   },
 };
 
-const item = {
+const item: any = {
   hidden: { y: 30, opacity: 0, scale: 0.95 },
   visible: {
     y: 0,

@@ -12,6 +12,7 @@ import {
   Wand2,
   Music,
   Camera,
+  Eye,
   type LucideIcon,
 } from "lucide-react";
 
@@ -101,6 +102,15 @@ const tools: Tool[] = [
     href: "/tools/ai-portrait",
     color: "#40c8e0",
     bgColor: "rgba(64,200,224,0.08)",
+  },
+  {
+    icon: Eye,
+    title: "AI 识图",
+    desc: "上传截图或图片，AI 智能识别内容、提取文字、描述画面",
+    href: "/tools/vision",
+    color: "#64d2ff",
+    bgColor: "rgba(100,210,255,0.08)",
+    tag: "新功能",
   },
 ];
 

@@ -1,6 +1,6 @@
 const DEEPSEEK_BASE = "https://api.deepseek.com/v1";
 
-export async function chatCompletion(messages: { role: string; content: string }[]) {
+export async function chatCompletion(messages: { role: string; content: string | any[] }[]) {
   const apiKey = process.env.DEEPSEEK_API_KEY;
   if (!apiKey) throw new Error("DEEPSEEK_API_KEY 未配置");
 

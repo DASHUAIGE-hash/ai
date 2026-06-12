@@ -1,12 +1,10 @@
 import { NextResponse } from "next/server";
-import { arkTextToImage } from "@/lib/ark";
-import { generateImageFlux } from "@/lib/replicate";
+import { agnesGenerateImage } from "@/lib/agnes";
 
 export async function POST(req: Request) {
   try {
     const { prompt, width, height, num_outputs, style } = await req.json();
 
-    // 拼接风格 prompt（中文优化）
     let finalPrompt = prompt;
     const styleMap: Record<string, string> = {
       realistic: "写实摄影风格，超高清，专业摄影，画质清晰",
@@ -18,47 +16,25 @@ export async function POST(req: Request) {
       minimal: "极简设计风格，几何构图，柔和色调，干净背景",
       fantasy: "奇幻风格，魔法世界，史诗场景，宏大画面",
     };
-    if (style && styleMap[style]) {
-      finalPrompt = `${prompt}，${styleMap[style]}`;
-    }
+    if (style && styleMap[style]) finalPrompt = `${prompt}，${styleMap[style]}`;
 
-    // 🥇 优先：ARK 即梦（最简单，免费额度）
-    if (process.env.ARK_API_KEY) {
-      try {
-        const result = await arkTextToImage(finalPrompt, {
-          width: width || 1024,
-          height: height || 1024,
-        });
-        const images = result.data?.map((d: any) => d.url).filter(Boolean) || [];
-        if (images.length > 0) {
-          return NextResponse.json({ success: true, images, provider: "即梦 ARK" });
-        }
-      } catch (e: any) {
-        console.log("ARK 失败:", e.message);
-      }
-    }
+    const w = width || 1024;
+    const h = height || 1024;
+    let size = "1024x1024";
+    if (w === 1792 && h === 1024) size = "1792x1024";
+    else if (w === 1024 && h === 1792) size = "1024x1792";
+    else if (w === 768 && h === 768) size = "768x768";
+    else if (w === 512 && h === 512) size = "512x512";
 
-    // 🥈 回退：火山引擎 HMAC
-    if (process.env.VOLC_ACCESS_KEY && process.env.VOLC_SECRET_KEY) {
-      const { jimengTextToImage } = await import("@/lib/volcengine");
-      const result = await jimengTextToImage(finalPrompt, { width: width || 1024, height: height || 1024 });
-      const images = result.data?.image_urls || [];
-      if (images.length > 0) {
-        return NextResponse.json({ success: true, images: images.slice(0, num_outputs || 1), provider: "火山引擎" });
-      }
-    }
+    const result = await agnesGenerateImage(finalPrompt, { n: num_outputs || 1, size });
 
-    // 🥉 回退：Replicate
-    if (process.env.REPLICATE_API_TOKEN) {
-      const output = await generateImageFlux(finalPrompt, { width: width || 1024, height: height || 1024, num_outputs: num_outputs || 1 });
-      return NextResponse.json({ success: true, images: output, provider: "Replicate" });
-    }
-
-    return NextResponse.json(
-      { success: false, error: "未配置任何 AI 图片服务" },
-      { status: 500 }
-    );
+    return NextResponse.json({
+      success: true,
+      images: result.urls,
+      provider: "Agnes AI",
+    });
   } catch (error: any) {
+    console.error("图片生成失败:", error);
     return NextResponse.json(
       { success: false, error: error.message || "生成失败" },
       { status: 500 }

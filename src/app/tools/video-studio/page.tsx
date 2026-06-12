@@ -55,6 +55,7 @@ export default function VideoStudioPage() {
   const [selectedVoice, setSelectedVoice] = useState("male1");
   const [scenes, setScenes] = useState<{ url: string; desc: string; approved: boolean }[]>([]);
   const [finalVideo, setFinalVideo] = useState("");
+  const [zoomImage, setZoomImage] = useState("");
 
   /* ── 生成脚本 ── */
   const generateScript = async () => {
@@ -365,7 +366,10 @@ export default function VideoStudioPage() {
               <p className="text-sm text-[#98989d]">逐张审阅，只有确认的分镜才会进入视频生成</p>
               {storyboards.map((frame, i) => (
                 <div key={i} className={`rounded-xl glass p-4 flex gap-4 items-start ${frame.approved ? "border border-green-500/20" : ""}`}>
-                  {frame.image ? <img src={frame.image} className="w-40 h-24 object-cover rounded-lg shrink-0" /> :
+                  {frame.image ? (
+                    <img src={frame.image} onClick={() => setZoomImage(frame.image)}
+                      className="w-40 h-24 object-cover rounded-lg shrink-0 cursor-zoom-in hover:ring-2 hover:ring-[#64d2ff]/50 transition-all" />
+                  ) :
                     <div className="w-40 h-24 rounded-lg bg-white/[0.03] flex items-center justify-center shrink-0"><Image className="h-6 w-6 text-[#6e6e78]" /></div>}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-white font-medium">场景 {i + 1}</p>
@@ -480,6 +484,20 @@ export default function VideoStudioPage() {
           )}
         </motion.div>
       </div>
+
+      {/* 图片放大弹窗 */}
+      {zoomImage && (
+        <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-8 cursor-zoom-out"
+          onClick={() => setZoomImage("")}>
+          <motion.img src={zoomImage} initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+            className="max-w-full max-h-full object-contain rounded-xl shadow-2xl"
+            onClick={e => e.stopPropagation()} />
+          <button onClick={() => setZoomImage("")}
+            className="absolute top-6 right-6 p-3 rounded-xl bg-white/10 text-white hover:bg-white/20 transition-all text-lg">
+            ✕ 关闭
+          </button>
+        </div>
+      )}
     </div>
   );
 }

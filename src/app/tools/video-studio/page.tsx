@@ -101,14 +101,17 @@ export default function VideoStudioPage() {
     setLoading(true);
     const sceneMatches = script.match(/【场景\d+】[^【】]+/g) || [script.substring(0, 200)];
     const frames: { image: string; desc: string; approved: boolean }[] = [];
+    const refImage = characters.length > 0 ? characters[0] : null;
+    const charHint = refImage ? "，主角形象参考上传的角色照片" : "";
 
     for (const sceneText of sceneMatches.slice(0, 5)) {
       try {
         const res = await fetch("/api/generate/image", {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            prompt: `视频分镜画面，电影级画质，16:9，${sceneText.substring(0, 300)}`,
+            prompt: `视频分镜画面，电影级画质，16:9，${sceneText.substring(0, 300)}${charHint}`,
             width: 1024, height: 576,
+            referenceImage: refImage,
           }),
         });
         const data = await res.json();
@@ -124,10 +127,15 @@ export default function VideoStudioPage() {
 
   const regenerateFrame = async (index: number) => {
     setLoading(true);
+    const refImage = characters.length > 0 ? characters[0] : null;
     try {
       const res = await fetch("/api/generate/image", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: `电影级分镜画面，与前后风格连贯，${storyboards[index].desc}`, width: 1024, height: 576 }),
+        body: JSON.stringify({
+          prompt: `电影级分镜画面，与前后风格连贯，${storyboards[index].desc}`,
+          width: 1024, height: 576,
+          referenceImage: refImage,
+        }),
       });
       const data = await res.json();
       const updated = [...storyboards];

@@ -3,7 +3,7 @@ import { agnesGenerateImage } from "@/lib/agnes";
 
 export async function POST(req: Request) {
   try {
-    const { prompt, width, height, num_outputs, style } = await req.json();
+    const { prompt, width, height, num_outputs, style, referenceImage } = await req.json();
 
     let finalPrompt = prompt;
     const styleMap: Record<string, string> = {
@@ -26,7 +26,7 @@ export async function POST(req: Request) {
     else if (w === 768 && h === 768) size = "768x768";
     else if (w === 512 && h === 512) size = "512x512";
 
-    const result = await agnesGenerateImage(finalPrompt, { n: num_outputs || 1, size });
+    const result = await agnesGenerateImage(finalPrompt, { n: num_outputs || 1, size, referenceImage });
 
     return NextResponse.json({
       success: true,

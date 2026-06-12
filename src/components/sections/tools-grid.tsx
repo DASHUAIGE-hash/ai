@@ -13,6 +13,7 @@ import {
   Music,
   Camera,
   Eye,
+  Clapperboard,
   type LucideIcon,
 } from "lucide-react";
 
@@ -110,6 +111,15 @@ const tools: Tool[] = [
     href: "/tools/vision",
     color: "#64d2ff",
     bgColor: "rgba(100,210,255,0.08)",
+    tag: "新功能",
+  },
+  {
+    icon: Clapperboard,
+    title: "视频工作室",
+    desc: "全流程AI视频制作：脚本→分镜→配音→场景→合成，每一步都可由你审阅把控",
+    href: "/tools/video-studio",
+    color: "#ff9f0a",
+    bgColor: "rgba(255,159,10,0.08)",
     tag: "新功能",
   },
 ];

@@ -144,26 +144,69 @@ export default function VideoStudioPage() {
     setLoading(false);
   };
 
-  /* ── 生成场景视频 ── */
+  /* ── 生成场景视频（异步轮询）── */
   const generateScenes = async () => {
     setLoading(true);
     const approvedFrames = storyboards.filter(f => f.approved);
-    const generatedScenes: { url: string; desc: string; approved: boolean }[] = [];
+    const generatedScenes: { url: string; desc: string; approved: boolean; taskId: string }[] = [];
 
+    // Step 1: 提交所有视频任务
     for (const frame of approvedFrames) {
       try {
         const res = await fetch("/api/generate/video", {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt: frame.desc.substring(0, 200), duration: 5 }),
+          body: JSON.stringify({ prompt: frame.desc.substring(0, 300), duration: 5 }),
         });
         const data = await res.json();
         generatedScenes.push({
-          url: data.videoData?.url || "",
+          url: "",
           desc: frame.desc,
           approved: false,
+          taskId: data.taskId || "",
         });
       } catch {
-        generatedScenes.push({ url: "", desc: frame.desc, approved: false });
+        generatedScenes.push({ url: "", desc: frame.desc, approved: false, taskId: "" });
+      }
+    }
+    setScenes(generatedScenes.map(s => ({ url: s.url, desc: s.desc, approved: s.approved })));
+
+    // Step 2: 轮询等待每个视频完成
+    const results: { url: string; desc: string; approved: boolean }[] = [];
+    for (const scene of generatedScenes) {
+      if (!scene.taskId) {
+        results.push({ url: "", desc: scene.desc, approved: false });
+        continue;
+      }
+
+      let completed = false;
+      for (let attempt = 0; attempt < 40; attempt++) {
+        await new Promise(r => setTimeout(r, 3000)); // 每3秒轮询
+        try {
+          const checkRes = await fetch("/api/generate/video", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "check", taskId: scene.taskId }),
+          });
+          const checkData = await checkRes.json();
+
+          if (checkData.status === "completed" && checkData.videoData?.url) {
+            results.push({ url: checkData.videoData.url, desc: scene.desc, approved: false });
+            // 实时更新当前进度
+            setScenes([...results]);
+            completed = true;
+            break;
+          } else if (checkData.status === "failed") {
+            results.push({ url: "", desc: scene.desc, approved: false });
+            completed = true;
+            break;
+          }
+          // 更新进度到界面
+          setScenes([...results, ...generatedScenes.slice(results.length + 1).map(s => ({ url: "", desc: s.desc, approved: false }))]);
+        } catch { }
+      }
+      if (!completed) {
+        results.push({ url: "", desc: scene.desc, approved: false });
+      }
+    }
       }
     }
 

@@ -56,9 +56,16 @@ export async function agnesCheckVideo(taskId: string) {
     headers: headers(),
   });
   if (!res.ok) throw new Error(`Agnes 视频查询失败: ${await res.text()}`);
-  const data = await res.json();
-  const d = data.data || {};
-  return { status: d.status, progress: d.progress || 0, videoData: d };
+  const json = await res.json();
+  // Agnes 嵌套格式: { code, data: { status, data: { url, ... } } }
+  const outer = json.data || json;
+  const inner = outer.data || outer;
+  return {
+    status: outer.status || inner.status || "unknown",
+    progress: outer.progress || 0,
+    videoUrl: inner.url || inner.video_url || inner.output_url || "",
+    videoData: inner,
+  };
 }
 
 /** 识图 / OCR / 图片分析 */

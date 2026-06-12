@@ -173,8 +173,8 @@ export default function VideoStudioPage() {
             body: JSON.stringify({ action: "check", taskId: task.taskId }),
           });
           const cd = await cr.json();
-          if (cd.status === "completed" && cd.videoData?.url) {
-            results.push({ url: cd.videoData.url, desc: task.desc, approved: false });
+          if (cd.status === "completed" && cd.videoUrl) {
+            results.push({ url: cd.videoUrl, desc: task.desc, approved: false });
             setScenes([...results]);
             gotIt = true;
             break;

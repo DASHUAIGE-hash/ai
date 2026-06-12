@@ -33,11 +33,23 @@ export default function VideoStudioPage() {
   const [progressMsg, setProgressMsg] = useState("");
 
   const [requirement, setRequirement] = useState("");
+  const [videoStyle, setVideoStyle] = useState("cinematic");
+  const [videoDuration, setVideoDuration] = useState(30);
   const [script, setScript] = useState("");
   const [scriptFeedback, setScriptFeedback] = useState("");
 
   const [characters, setCharacters] = useState<string[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const VIDEO_STYLES = [
+    { id: "cinematic", label: "电影质感", emoji: "🎬" },
+    { id: "anime", label: "动漫风格", emoji: "🎨" },
+    { id: "realistic", label: "写实风格", emoji: "📹" },
+    { id: "fantasy", label: "奇幻特效", emoji: "✨" },
+    { id: "3d", label: "3D 动画", emoji: "💎" },
+    { id: "vintage", label: "复古胶片", emoji: "📽️" },
+  ];
+  const DURATIONS = [10, 15, 20, 30, 45, 60];
 
   const [storyboards, setStoryboards] = useState<{ image: string; desc: string; approved: boolean }[]>([]);
   const [selectedVoice, setSelectedVoice] = useState("male1");
@@ -53,7 +65,7 @@ export default function VideoStudioPage() {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: [
-            { role: "system", content: "你是专业视频脚本编剧。生成详细视频脚本：每个场景用【场景X】标记，包含画面描述、旁白/对白、时长建议。" },
+            { role: "system", content: `你是专业视频脚本编剧。生成详细视频脚本：风格为${VIDEO_STYLES.find(s => s.id === videoStyle)?.label}，总时长约${videoDuration}秒。每个场景用【场景X】标记，包含画面描述、旁白/对白、时长建议(每个场景分配合理时间)。` },
             { role: "user", content: requirement },
           ],
         }),
@@ -136,7 +148,7 @@ export default function VideoStudioPage() {
       try {
         const res = await fetch("/api/generate/video", {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt: frame.desc.substring(0, 300), duration: 5 }),
+          body: JSON.stringify({ prompt: frame.desc.substring(0, 300), duration: Math.max(5, Math.round(videoDuration / approvedFrames.length)) }),
         });
         const data = await res.json();
         tasks.push({ taskId: data.taskId || "", desc: frame.desc });
@@ -224,10 +236,41 @@ export default function VideoStudioPage() {
           {step === 1 && (
             <div className="space-y-4">
               <h3 className="text-lg font-bold text-white flex items-center gap-2"><Clapperboard className="h-5 w-5 text-[#ff9f0a]" />输入视频需求</h3>
-              <p className="text-sm text-[#98989d]">描述视频内容、风格、时长和特殊要求</p>
+              <p className="text-sm text-[#98989d]">描述视频内容、场景和特殊要求</p>
+
+              {/* 风格选择 */}
+              <div>
+                <p className="text-xs text-[#6e6e78] mb-2">视频风格</p>
+                <div className="flex flex-wrap gap-2">
+                  {VIDEO_STYLES.map(s => (
+                    <motion.button key={s.id} whileTap={{ scale: 0.95 }}
+                      onClick={() => setVideoStyle(s.id)}
+                      className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium transition-all ${
+                        videoStyle === s.id ? "bg-[#ff9f0a]/15 text-[#ff9f0a] border border-[#ff9f0a]/30" : "bg-white/[0.03] text-[#98989d] border border-transparent hover:bg-white/[0.06]"
+                      }`}>{s.emoji} {s.label}</motion.button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 时长选择 */}
+              <div>
+                <p className="text-xs text-[#6e6e78] mb-2">视频时长（最少10秒）</p>
+                <div className="flex gap-2">
+                  {DURATIONS.map(d => (
+                    <motion.button key={d} whileTap={{ scale: 0.95 }}
+                      onClick={() => setVideoDuration(d)}
+                      className={`rounded-xl px-4 py-2 text-sm font-medium transition-all ${
+                        videoDuration === d ? "bg-[#ff9f0a]/15 text-[#ff9f0a] border border-[#ff9f0a]/30" : "bg-white/[0.03] text-[#98989d] border border-transparent hover:bg-white/[0.06]"
+                      }`}>{d}秒</motion.button>
+                  ))}
+                </div>
+              </div>
+
               <textarea value={requirement} onChange={e => setRequirement(e.target.value)}
-                placeholder="例如：制作一个30秒的环保公益广告，主角是一个小女孩，场景有公园、海边..." rows={6}
+                placeholder="例如：制作一个环保公益广告，主角是一个小女孩，场景有公园、海边，主题是保护海洋..."
+                rows={4}
                 className="w-full resize-none rounded-xl bg-white/[0.04] border border-white/[0.08] px-4 py-3 text-sm text-white placeholder:text-[#6e6e78] focus:outline-none focus:border-[#ff9f0a]/40 transition-all" />
+              {videoStyle !== "cinematic" && <p className="text-xs text-[#ff9f0a]">🎬 风格：{VIDEO_STYLES.find(s => s.id === videoStyle)?.label} · ⏱ 时长：{videoDuration}秒</p>}
               <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
                 onClick={generateScript} disabled={!requirement.trim() || loading}
                 className={`w-full rounded-xl py-3.5 text-sm font-semibold text-white ${!requirement.trim() ? "opacity-30 cursor-not-allowed" : ""}`}
